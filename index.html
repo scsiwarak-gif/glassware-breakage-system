@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกเครื่องแก้วแตก | Glassware Breakage Logger</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                </div>
+                <h2>Lab Logger</h2>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#dashboard" class="nav-item active" id="nav-dashboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="9" rx="1" />
+                        <rect x="14" y="3" width="7" height="5" rx="1" />
+                        <rect x="14" y="12" width="7" height="9" rx="1" />
+                        <rect x="3" y="16" width="7" height="5" rx="1" />
+                    </svg>
+                    <span>แดชบอร์ด</span>
+                </a>
+                <a href="#records" class="nav-item" id="nav-records">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    <span>ประวัติบันทึก</span>
+                </a>
+                <a href="#add-record" class="nav-item" id="nav-add-record">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    <span>บันทึกเครื่องแก้วแตก</span>
+                </a>
+                <a href="#settings" class="nav-item admin-only" id="nav-settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                    </svg>
+                    <span>ตั้งค่าระบบ</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p>เวอร์ชัน 1.0.0</p>
+                <button id="btn-seed" class="btn btn-secondary btn-sm" title="จำลองข้อมูลเพื่อตรวจสอบการแสดงผล">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67"/>
+                    </svg>
+                    ข้อมูลตัวอย่าง
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1 id="current-page-title">แดชบอร์ดสรุปสถิติ</h1>
+                    <p class="subtitle" id="current-page-subtitle">รายงานสรุปข้อมูลเครื่องแก้วชำรุดเสียหายในห้องปฏิบัติการ</p>
+                </div>
+                <div class="user-controls">
+                    <!-- Login / Logout buttons -->
+                    <button id="btn-admin-login-trigger" class="btn btn-outline btn-sm general-only">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0110 0v4"/>
+                        </svg>
+                        เข้าสู่ระบบแอดมิน
+                    </button>
+                    
+                    <button id="btn-admin-logout" class="btn btn-danger-outline btn-sm admin-only">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                        </svg>
+                        ออกจากระบบ
+                    </button>
+                    
+                    <div class="user-profile">
+                        <div class="avatar" id="user-avatar">U</div>
+                        <div class="info">
+                            <span class="name" id="user-display-name">Guest User</span>
+                            <span class="role" id="user-display-role">บุคคลทั่วไป</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Section -->
+            <section id="section-dashboard" class="content-section">
+                <!-- KPI Widgets Grid -->
+                <div class="kpi-grid">
+                    <div class="kpi-card glass">
+                        <div class="kpi-icon icon-danger">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div class="kpi-info">
+                            <h3>จำนวนชำรุดสะสม</h3>
+                            <p class="value" id="kpi-total-items">0 <span class="unit">ชิ้น</span></p>
+                            <span class="trend neutral" id="kpi-total-records-count">ทั้งหมด 0 รายการ</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass">
+                        <div class="kpi-icon icon-warning">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                        <div class="kpi-info">
+                            <h3>มูลค่าความเสียหาย</h3>
+                            <p class="value" id="kpi-total-cost">0.00 <span class="unit">บาท</span></p>
+                            <span class="trend danger" id="kpi-avg-cost">เฉลี่ย 0.00 บาท/ชิ้น</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass">
+                        <div class="kpi-icon icon-info">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                        <div class="kpi-info">
+                            <h3>สาเหตุหลักที่เกิด</h3>
+                            <p class="value" id="kpi-top-cause">-</p>
+                            <span class="trend info" id="kpi-top-cause-pct">อัตราส่วน -% ของทั้งหมด</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-grid">
+                    <div class="chart-card glass">
+                        <h3>ประเภทเครื่องแก้วที่แตกบ่อย</h3>
+                        <div class="chart-container">
+                            <canvas id="chart-by-type"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card glass">
+                        <h3>วิเคราะห์สาเหตุการชำรุด</h3>
+                        <div class="chart-container">
+                            <canvas id="chart-by-cause"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity & Quick View -->
+                <div class="dashboard-row-two">
+                    <div class="recent-card glass">
+                        <div class="card-header">
+                            <h3>ประวัติการบันทึกล่าสุด</h3>
+                            <a href="#records" class="view-all-link">ดูทั้งหมด &rarr;</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>วันที่-เวลา</th>
+                                        <th>รายการเครื่องแก้ว</th>
+                                        <th>รายวิชา</th>
+                                        <th>ห้องปฏิบัติการ</th>
+                                        <th>จำนวน</th>
+                                        <th>ผู้บันทึก</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-records-tbody">
+                                    <!-- Dynamic rows from JS -->
+                                    <tr>
+                                        <td colspan="6" class="empty-state">ไม่มีข้อมูลบันทึกในระบบ</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Records List Section -->
+            <section id="section-records" class="content-section" style="display: none;">
+                <div class="records-control-bar glass">
+                    <!-- Filters & Search -->
+                    <div class="filters-row">
+                        <div class="form-group search-box">
+                            <input type="text" id="search-input" placeholder="ค้นหาตามชื่อเครื่องแก้ว, ผู้บันทึก...">
+                            <span class="search-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="form-group select-filter">
+                            <select id="filter-type">
+                                <option value="">ทุกประเภทเครื่องแก้ว</option>
+                                <!-- Populate via JS -->
+                            </select>
+                        </div>
+                        <div class="form-group select-filter">
+                            <select id="filter-room">
+                                <option value="">ทุกห้องแล็บ</option>
+                                <!-- Populate via JS -->
+                            </select>
+                        </div>
+                        <div class="form-group select-filter">
+                            <select id="filter-cause">
+                                <option value="">ทุกสาเหตุ</option>
+                                <option value="ลื่นหลุดมือ">ลื่นหลุดมือ</option>
+                                <option value="แตกขณะล้าง">แตกขณะล้าง</option>
+                                <option value="อุณหภูมิเปลี่ยนฉับพลัน">อุณหภูมิเปลี่ยนฉับพลัน</option>
+                                <option value="กระทบกันขณะเคลื่อนย้าย">กระทบกันขณะเคลื่อนย้าย</option>
+                                <option value="อื่นๆ">อื่นๆ</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="actions-row">
+                        <button id="btn-export-csv" class="btn btn-success">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                            </svg>
+                            ส่งออก CSV
+                        </button>
+                        <button id="btn-import-json-trigger" class="btn btn-outline admin-only">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                            </svg>
+                            นำเข้า JSON (สำรอง)
+                        </button>
+                        <input type="file" id="import-json-file" accept=".json" style="display: none;">
+                        <button id="btn-clear-all" class="btn btn-danger-outline admin-only">ล้างข้อมูลทั้งหมด</button>
+                    </div>
+                </div>
+
+                <!-- Data Table main -->
+                <div class="table-card glass">
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>วันที่-เวลา</th>
+                                    <th>รายการเครื่องแก้ว</th>
+                                    <th>ขนาด/ความจุ</th>
+                                    <th>ราคาต่อชิ้น (บาท)</th>
+                                    <th>จำนวน</th>
+                                    <th>มูลค่าเสียหาย</th>
+                                    <th>รายวิชา</th>
+                                    <th>ห้องแล็บ</th>
+                                    <th>สาเหตุการแตก</th>
+                                    <th>ผู้บันทึก</th>
+                                    <th>หมายเหตุ</th>
+                                    <th class="actions-col admin-only">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="records-tbody">
+                                <!-- Dynamic rows from JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination / Footer Info -->
+                    <div class="table-footer">
+                        <div class="pagination-info" id="pagination-text">
+                            แสดง 0 ถึง 0 จากทั้งหมด 0 รายการ
+                        </div>
+                        <div class="pagination-buttons" id="pagination-controls">
+                            <!-- Dynamic buttons from JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Form Section (Add/Edit) -->
+            <section id="section-add-record" class="content-section" style="display: none;">
+                <div class="form-container-card glass">
+                    <div class="form-header">
+                        <h2 id="form-title">ลงบันทึกข้อมูลเครื่องแก้วแตก</h2>
+                        <p>กรุณากรอกข้อมูลเพื่อเก็บสถิติและวิเคราะห์ความเสียหายในห้องปฏิบัติการ</p>
+                    </div>
+                    <form id="record-form">
+                        <!-- Hidden input for editing existing records -->
+                        <input type="hidden" id="edit-id" value="">
+                        
+                        <div class="form-grid">
+                            <div class="form-group col-6">
+                                <label for="field-date">วันที่และเวลาเกิดเหตุ <span class="required">*</span></label>
+                                <input type="datetime-local" id="field-date" required>
+                            </div>
+                            
+                            <div class="form-group col-6">
+                                <label for="field-reporter">ผู้ลงบันทึก / ผู้ทำเสียหาย <span class="required">*</span></label>
+                                <input type="text" id="field-reporter" placeholder="ชื่อ-นามสกุล หรือ รหัสนักศึกษา" required>
+                            </div>
+
+                            <div class="form-group col-6">
+                                <label for="field-subject">รายวิชา / รหัสวิชา <span class="required">*</span></label>
+                                <div class="custom-select-wrapper">
+                                    <select id="field-subject" required>
+                                        <option value="">เลือกรายวิชา...</option>
+                                        <!-- Populate dynamically via JS -->
+                                        <option value="อื่นๆ">อื่นๆ (ระบุในช่องรายวิชาอื่น)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-6" id="custom-subject-group" style="display: none;">
+                                <label for="field-custom-subject">รายวิชาอื่นๆ (โปรดระบุ) <span class="required">*</span></label>
+                                <input type="text" id="field-custom-subject" placeholder="ระบุชื่อวิชาหรือรหัสวิชา">
+                            </div>
+
+                            <div class="form-group col-6">
+                                <label for="field-type">ประเภทเครื่องแก้ว <span class="required">*</span></label>
+                                <div class="custom-select-wrapper">
+                                    <select id="field-type" required>
+                                        <option value="">เลือกประเภทเครื่องแก้ว...</option>
+                                        <!-- Populate dynamically via JS -->
+                                        <option value="อื่นๆ">อื่นๆ (ระบุในช่องประเภทอื่น)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-6" id="custom-type-group" style="display: none;">
+                                <label for="field-custom-type">ประเภทเครื่องแก้วอื่นๆ (โปรดระบุ) <span class="required">*</span></label>
+                                <input type="text" id="field-custom-type" placeholder="เช่น ขวดเพาะเชื้อ, บีกเกอร์พลาสติก">
+                            </div>
+
+                            <div class="form-group col-6">
+                                <label for="field-size">ขนาด / ความจุ <span class="required">*</span></label>
+                                <div class="custom-select-wrapper">
+                                    <select id="field-size" required>
+                                        <option value="">เลือกขนาด / ความจุ...</option>
+                                        <!-- Populate dynamically via JS -->
+                                        <option value="อื่นๆ">อื่นๆ (ระบุในช่องขนาดอื่น)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-6" id="custom-size-group" style="display: none;">
+                                <label for="field-custom-size">ขนาด / ความจุอื่นๆ (โปรดระบุ) <span class="required">*</span></label>
+                                <input type="text" id="field-custom-size" placeholder="เช่น 2 L, 10x100 mm">
+                            </div>
+
+                            <div class="form-group col-3">
+                                <label for="field-price">ราคาต่อชิ้น (บาท)</label>
+                                <input type="number" id="field-price" placeholder="เช่น 150" min="0" step="any">
+                            </div>
+
+                            <div class="form-group col-3">
+                                <label for="field-quantity">จำนวน (ชิ้น) <span class="required">*</span></label>
+                                <input type="number" id="field-quantity" value="1" min="1" required>
+                            </div>
+
+                            <div class="form-group col-6" style="display:flex; align-items:center; justify-content: flex-start; padding-top: 1.5rem;">
+                                <div id="form-total-cost-preview" style="font-size: 1.05rem; font-weight: 700; color: var(--danger); background-color: var(--danger-light); padding: 0.5rem 1rem; border-radius: var(--radius-sm); border: 1px solid rgba(203, 107, 107, 0.2); width: 100%; text-align: center;">
+                                    มูลค่าความเสียหายรวม: 0.00 บาท
+                                </div>
+                            </div>
+                            <div class="form-group col-6">
+                                <label for="field-room">ห้องปฏิบัติการที่เกิดเหตุ <span class="required">*</span></label>
+                                <div class="custom-select-wrapper">
+                                    <select id="field-room" required>
+                                        <option value="">เลือกห้องปฏิบัติการ...</option>
+                                        <!-- Populate dynamically via JS -->
+                                        <option value="อื่นๆ">อื่นๆ (ระบุในช่องห้องแล็บอื่น)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-6" id="custom-room-group" style="display: none;">
+                                <label for="field-custom-room">ห้องปฏิบัติการอื่นๆ (โปรดระบุ) <span class="required">*</span></label>
+                                <input type="text" id="field-custom-room" placeholder="เช่น ห้องแล็บวิจัยเฉพาะทาง, โซนสนามนอกอาคาร">
+                            </div>
+
+                            <div class="form-group col-6">
+                                <label for="field-cause">สาเหตุของการชำรุด <span class="required">*</span></label>
+                                <div class="custom-select-wrapper">
+                                    <select id="field-cause" required>
+                                        <option value="">เลือกสาเหตุการชำรุด...</option>
+                                        <!-- Populate dynamically via JS -->
+                                        <option value="อื่นๆ">อื่นๆ (ระบุในช่องสาเหตุอื่น)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-6" id="custom-cause-group" style="display: none;">
+                                <label for="field-custom-cause">สาเหตุของการชำรุดอื่นๆ (โปรดระบุ) <span class="required">*</span></label>
+                                <input type="text" id="field-custom-cause" placeholder="ระบุสาเหตุการชำรุดเพิ่มเติม">
+                            </div>
+
+                            <div class="form-group col-12">
+                                <label for="field-notes">หมายเหตุเพิ่มเติม</label>
+                                <textarea id="field-notes" rows="3" placeholder="ระบุเหตุการณ์เฉพาะตัว หรือข้อมูลเพิ่มเติมที่เป็นประโยชน์ต่อการป้องกัน..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" id="btn-cancel-form" class="btn btn-outline">ยกเลิก</button>
+                            <button type="submit" id="btn-submit-form" class="btn btn-primary">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                                    <polyline points="17 21 17 13 7 13 7 21"/>
+                                    <polyline points="7 3 7 8 15 8"/>
+                                </svg>
+                                บันทึกข้อมูล
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- System Settings Section (Admin-only) -->
+            <section id="section-settings" class="content-section admin-only" style="display: none;">
+                <div class="settings-container">
+                    <!-- Sidebar Tab Selectors -->
+                    <div class="settings-sidebar">
+                        <button class="settings-tab active" data-target="panel-glassware">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                            </svg>
+                            ประเภทเครื่องแก้ว
+                        </button>
+                        <button class="settings-tab" data-target="panel-sizes">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="9" y1="3" x2="9" y2="21"/>
+                            </svg>
+                            ขนาด / ความจุ
+                        </button>
+                        <button class="settings-tab" data-target="panel-subjects">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                            </svg>
+                            รายวิชา / รหัสวิชา
+                        </button>
+                        <button class="settings-tab" data-target="panel-rooms">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                <polyline points="9 22 9 12 15 12 15 22"/>
+                            </svg>
+                            ห้องปฏิบัติการ
+                        </button>
+                        <button class="settings-tab" data-target="panel-causes">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                            สาเหตุการชำรุด
+                        </button>
+                    </div>
+                    
+                    <!-- Content Panels -->
+                    <div class="settings-content">
+                        <!-- Panel 1: Glassware Types -->
+                        <div class="settings-panel active" id="panel-glassware">
+                            <h3>จัดการประเภทเครื่องแก้ว</h3>
+                            <div class="settings-form-wrapper">
+                                <form id="settings-type-form" style="display:flex; gap:0.5rem; margin-bottom:1.25rem; align-items: flex-end;">
+                                    <div class="form-group" style="flex:1;">
+                                        <label for="settings-type-name" style="font-size: 0.8rem; font-weight:600;">ชื่อประเภทเครื่องแก้ว</label>
+                                        <input type="text" id="settings-type-name" placeholder="เช่น Beaker (บีกเกอร์)" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" style="padding:0.65rem 1rem; height: 38px;">เพิ่ม</button>
+                                </form>
+                            </div>
+                            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                                <table class="data-table small-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ประเภทเครื่องแก้ว</th>
+                                            <th>จำนวนขนาดที่กำหนด</th>
+                                            <th style="width: 140px; text-align:center;">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="settings-types-tbody">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Panel 2: Sizes -->
+                        <div class="settings-panel" id="panel-sizes">
+                            <h3>จัดการขนาดเริ่มต้นทั่วไป (สำหรับกรณีเลือกประเภท "อื่นๆ")</h3>
+                            <div class="settings-form-wrapper">
+                                <form id="settings-size-form" style="display:flex; gap:0.5rem; margin-bottom:1.25rem; align-items: flex-end;">
+                                    <div class="form-group" style="flex:3;">
+                                        <label for="settings-size-name" style="font-size: 0.8rem; font-weight:600;">ขนาด / ความจุทั่วไป</label>
+                                        <input type="text" id="settings-size-name" placeholder="เช่น 250 mL หรือ 15x150 mm" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" style="padding:0.65rem 1rem; height: 38px;">เพิ่ม</button>
+                                </form>
+                            </div>
+                            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                                <table class="data-table small-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ขนาด / ความจุทั่วไป</th>
+                                            <th style="width: 60px; text-align:center;">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="settings-sizes-tbody">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Panel 3: Subjects -->
+                        <div class="settings-panel" id="panel-subjects">
+                            <h3>จัดการรายชื่อและรหัสวิชาหลัก</h3>
+                            <div class="settings-form-wrapper">
+                                <form id="settings-subject-form" style="display:flex; gap:0.5rem; margin-bottom:1.25rem; align-items: flex-end;">
+                                    <div class="form-group" style="flex:3;">
+                                        <label for="settings-subject-name" style="font-size: 0.8rem; font-weight:600;">ชื่อรายวิชา / รหัสวิชา</label>
+                                        <input type="text" id="settings-subject-name" placeholder="เช่น ว30224 เคมี 3 หรือ SC212 แล็บเคมี" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" style="padding:0.65rem 1rem; height: 38px;">เพิ่ม</button>
+                                </form>
+                            </div>
+                            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                                <table class="data-table small-table">
+                                    <thead>
+                                        <tr>
+                                            <th>รายวิชา / รหัสวิชา</th>
+                                            <th style="width: 60px; text-align:center;">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="settings-subjects-tbody">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Panel 4: Lab Rooms -->
+                        <div class="settings-panel" id="panel-rooms">
+                            <h3>จัดการรายชื่อห้องปฏิบัติการหลัก</h3>
+                            <div class="settings-form-wrapper">
+                                <form id="settings-room-form" style="display:flex; gap:0.5rem; margin-bottom:1.25rem; align-items: flex-end;">
+                                    <div class="form-group" style="flex:3;">
+                                        <label for="settings-room-name" style="font-size: 0.8rem; font-weight:600;">ชื่อห้องปฏิบัติการ</label>
+                                        <input type="text" id="settings-room-name" placeholder="เช่น ห้องแล็บเคมีทั่วไป 101" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" style="padding:0.65rem 1rem; height: 38px;">เพิ่ม</button>
+                                </form>
+                            </div>
+                            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                                <table class="data-table small-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ห้องปฏิบัติการ</th>
+                                            <th style="width: 60px; text-align:center;">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="settings-rooms-tbody">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Panel 5: Breakage Causes -->
+                        <div class="settings-panel" id="panel-causes">
+                            <h3>จัดการตัวเลือกสาเหตุการชำรุดเสียหาย</h3>
+                            <div class="settings-form-wrapper">
+                                <form id="settings-cause-form" style="display:flex; gap:0.5rem; margin-bottom:1.25rem; align-items: flex-end;">
+                                    <div class="form-group" style="flex:3;">
+                                        <label for="settings-cause-name" style="font-size: 0.8rem; font-weight:600;">สาเหตุการชำรุด</label>
+                                        <input type="text" id="settings-cause-name" placeholder="เช่น ตกแต่งขณะทำแล็บ หรือลื่นหลุดมือ" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" style="padding:0.65rem 1rem; height: 38px;">เพิ่ม</button>
+                                </form>
+                            </div>
+                            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                                <table class="data-table small-table">
+                                    <thead>
+                                        <tr>
+                                            <th>สาเหตุการชำรุด</th>
+                                            <th style="width: 60px; text-align:center;">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="settings-causes-tbody">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-box glass">
+            <div class="modal-header">
+                <h2>เข้าสู่ระบบผู้ดูแลระบบ (Admin Login)</h2>
+                <button type="button" id="btn-close-login-modal" class="btn-close-modal">&times;</button>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">ชื่อผู้ใช้งาน</label>
+                    <input type="text" id="login-username" value="admin" required placeholder="กรอกชื่อผู้ใช้งาน">
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="login-password">รหัสผ่าน</label>
+                    <input type="password" id="login-password" required placeholder="กรอกรหัสผ่าน">
+                    <span class="password-hint" style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem; display:block;">รหัสผ่านเริ่มต้นสำหรับทดสอบ: <code style="background:var(--primary-light); padding:2px 4px; border-radius:4px; font-weight:600;">admin123</code></span>
+                </div>
+                <div class="modal-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" id="btn-cancel-login" class="btn btn-outline">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">เข้าสู่ระบบ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Glassware Sizes Modal -->
+    <div id="sizes-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-box glass" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 id="sizes-modal-title">จัดการขนาดและราคา</h2>
+                <button type="button" id="btn-close-sizes-modal" class="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding-top: 1rem;">
+                <form id="modal-size-form" style="display:flex; gap:0.5rem; margin-bottom:1.25rem; align-items: flex-end;">
+                    <input type="hidden" id="modal-size-type-index" value="">
+                    <div class="form-group" style="flex:2;">
+                        <label for="modal-size-name" style="font-size: 0.8rem; font-weight:600;">ขนาด / ความจุ</label>
+                        <input type="text" id="modal-size-name" placeholder="เช่น 250 mL" required>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label for="modal-size-price" style="font-size: 0.8rem; font-weight:600;">ราคา (บาท)</label>
+                        <input type="number" id="modal-size-price" placeholder="150" min="0" step="any" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding:0.65rem 1rem; height: 38px;">เพิ่ม</button>
+                </form>
+                
+                <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                    <table class="data-table small-table">
+                        <thead>
+                            <tr>
+                                <th>ขนาด / ความจุ</th>
+                                <th>ราคา (บาท)</th>
+                                <th style="width: 60px; text-align:center;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-sizes-tbody">
+                            <!-- Dynamic rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                <button type="button" id="btn-close-sizes-modal-ok" class="btn btn-primary">เสร็จสิ้น</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Custom App JS -->
+    <script src="js/app.js"></script>
+</body>
+</html>

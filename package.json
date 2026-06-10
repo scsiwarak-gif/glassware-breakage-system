@@ -1,0 +1,17 @@
+{
+  "name": "glassware-breakage-logger",
+  "version": "1.0.0",
+  "description": "ระบบบันทึกเครื่องแก้วแตก - Glassware Breakage Recording System",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve ."
+  },
+  "keywords": [
+    "glassware",
+    "breakage",
+    "logger",
+    "lab"
+  ],
+  "author": "",
+  "license": "ISC"
+}
